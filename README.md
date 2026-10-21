@@ -130,6 +130,6 @@ TLS verification is intentionally off for fingerprinting. A network attacker cou
 
 This project is released under the [MIT License](LICENSE).
 
-Copyright (c) 2026 the php2shellcheck authors
+Copyright (c) 2026 Josh Gatka
 
 You can use, copy, modify, and distribute this software, including for commercial purposes. Include the copyright notice and the license text with any substantial copy. The software is provided as is, without warranty.
