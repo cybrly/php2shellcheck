@@ -19,15 +19,6 @@ That match is a reconnaissance indicator for:
 
 It is not confirmation that either CVE is exploitable. A host with no matching header is not written to the results file, and that is not proof the host is safe.
 
-```text
-    ___  _  _ ___  ___  ____ _  _ ____ _    _    ____ _  _ ____ ____ _  _
-   |__] |__| |__]  __] [__  |__| |___ |    |    |    |__| |___ |    |_/
-   |    |  | |    |__  ___] |  | |___ |___ |___ |___ |  | |___ |___ | \
-============================ PHP2SHELLCHECK =============================
-```
-
-The banner prints in green when stdout is a terminal. Quiet mode (`-q`) skips it.
-
 ## 2. Prerequisites and installation
 
 - Python 3.8 or newer
