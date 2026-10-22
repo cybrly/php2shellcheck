@@ -246,6 +246,30 @@ def normalize_target(token):
     return None
 
 
+def host_from_url(value):
+    """Return the host in a URL or a bare host name, or None.
+
+    Accepts https://www.example.com/, www.example.com/path, and example.com.
+    Only the host is kept; every probed port is still scanned.
+    """
+    text = value.strip()
+    host = normalize_target(text)
+    if host is not None:
+        return host
+    if "://" not in text:
+        text = "//" + text
+    try:
+        parts = urlsplit(text)
+        parts.port
+    except ValueError:
+        return None
+    if parts.scheme and parts.scheme.lower() not in DEFAULT_PORTS:
+        return None
+    if not parts.hostname:
+        return None
+    return normalize_target(parts.hostname)
+
+
 def expand_network(token):
     """Return the hosts in a CIDR block, or None when the token is not one.
 
@@ -435,6 +459,16 @@ def parse_arguments():
         help="Text file of IP addresses, hostnames, or CIDR blocks, one per line.",
     )
     parser.add_argument(
+        "-u",
+        "--url",
+        dest="urls",
+        action="append",
+        default=[],
+        metavar="URL",
+        help="One URL or hostname to scan, such as https://www.example.com/ or "
+        "example.com. Repeat to add more.",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         dest="output_file",
@@ -461,9 +495,9 @@ def parse_arguments():
         parser.print_help()
         sys.exit(0)
 
-    if not args.target_file:
+    if not args.target_file and not args.urls:
         show_banner()
-        error("Error: Target file parameter (-t) is required.\n")
+        error("Error: A target file (-t) or URL (-u) is required.\n")
         parser.print_help(sys.stderr)
         sys.exit(1)
 
@@ -472,7 +506,7 @@ def parse_arguments():
         error(f"Error: Output directory '{parent}' does not exist.")
         sys.exit(1)
 
-    if paths_same(args.target_file, args.output_file):
+    if args.target_file and paths_same(args.target_file, args.output_file):
         error("Error: Output file must not be the same as the target file.")
         sys.exit(1)
 
@@ -660,14 +694,28 @@ async def main():
     if not args.quiet:
         show_banner()
 
-    try:
-        hosts, skipped, duplicates = load_targets(args.target_file)
-    except FileNotFoundError:
-        error(f"Error: Target file '{args.target_file}' not found.")
-        sys.exit(1)
-    except OSError as exc:
-        error(f"Error: Could not read '{args.target_file}': {exc}")
-        sys.exit(1)
+    hosts, skipped, duplicates = [], 0, 0
+    if args.target_file:
+        try:
+            hosts, skipped, duplicates = load_targets(args.target_file)
+        except FileNotFoundError:
+            error(f"Error: Target file '{args.target_file}' not found.")
+            sys.exit(1)
+        except OSError as exc:
+            error(f"Error: Could not read '{args.target_file}': {exc}")
+            sys.exit(1)
+
+    seen = {host.lower() for host in hosts}
+    for url in args.urls:
+        host = host_from_url(url)
+        if host is None:
+            error(f"Error: '{sanitize(url, limit=200)}' is not a valid URL or hostname.")
+            sys.exit(1)
+        if host.lower() in seen:
+            duplicates += 1
+            continue
+        seen.add(host.lower())
+        hosts.append(host)
 
     if not hosts:
         error(f"Error: No valid targets in '{args.target_file}'.")
