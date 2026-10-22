@@ -85,6 +85,24 @@ class TargetTests(unittest.TestCase):
         self.assertEqual(hosts, ["192.0.2.1", "192.0.2.2", "example.com"])
         self.assertEqual((skipped, duplicates), (2, 1))
 
+    def test_host_from_url(self):
+        for value in (
+            "https://www.capehenlopenschools.com/",
+            "http://www.capehenlopenschools.com:8080/path?q=1#top",
+            "www.capehenlopenschools.com/",
+            "www.capehenlopenschools.com",
+            " WWW.CapeHenlopenSchools.com. ",
+        ):
+            self.assertEqual(
+                p.host_from_url(value).lower(), "www.capehenlopenschools.com", value
+            )
+        self.assertEqual(p.host_from_url("capehenlopenschools.com"), "capehenlopenschools.com")
+        self.assertEqual(p.host_from_url("https://192.0.2.5/"), "192.0.2.5")
+        self.assertEqual(p.host_from_url("https://[2001:db8::1]:8443/"), "2001:db8::1")
+        self.assertEqual(p.host_from_url("2001:db8::1"), "2001:db8::1")
+        for value in ("", "ftp://example.com/", "https:///", "http://exa mple.com/", "http://x:bad/"):
+            self.assertIsNone(p.host_from_url(value), value)
+
     def test_same_origin_redirect(self):
         url = "http://example.com:80/"
         self.assertEqual(

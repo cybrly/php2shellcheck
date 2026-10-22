@@ -55,7 +55,8 @@ python php2shellcheck.py -h
 
 | Parameter | Short | Long | Description | Required |
 | --- | --- | --- | --- | --- |
-| Target file | `-t` | `--target` | Text file of IP addresses, hostnames, or CIDR blocks, one per line | Yes |
+| Target file | `-t` | `--target` | Text file of IP addresses, hostnames, or CIDR blocks, one per line | Yes, unless `-u` is given |
+| URL | `-u` | `--url` | One URL or hostname to scan, such as `https://www.example.com/` or `example.com`. Repeat to add more. | Yes, unless `-t` is given |
 | Output file | `-o` | `--output` | Where to write the results. Default: `scan_results.txt` | No |
 | Quiet mode | `-q` | `--quiet` | Print a host only when it is `VULNERABLE`, `END OF LIFE`, or `VERSION UNKNOWN` | No |
 
@@ -76,6 +77,15 @@ While a normal scan runs, a progress bar is drawn on stderr:
 ```bash
 python php2shellcheck.py -t targets.txt
 ```
+
+**Scan one site without a target file.** A full URL or a bare hostname both work. Only the host is kept; the scheme, port, and path are ignored, and all four ports are still probed. `-u` can be repeated and combined with `-t`.
+
+```bash
+python php2shellcheck.py -u https://www.example.com/
+python php2shellcheck.py -u example.com -u www.example.com
+```
+
+`example.com` and `www.example.com` are separate hosts. A redirect from one to the other is not followed, so list both when both are in scope.
 
 **Choose the results path:**
 
